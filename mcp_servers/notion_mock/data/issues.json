@@ -1,0 +1,21 @@
+[
+  {
+    "id": "ISSUE-1",
+    "title": "Investigate shipping delays for ORD-2038",
+    "status": "open",
+    "priority": "high",
+    "tags": [
+      "shipping",
+      "sla"
+    ]
+  },
+  {
+    "id": "ISSUE-2",
+    "title": "Inventory discrepancy for BRAC-301",
+    "status": "in_progress",
+    "priority": "medium",
+    "tags": [
+      "inventory"
+    ]
+  }
+]

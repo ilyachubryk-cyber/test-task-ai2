@@ -1,0 +1,20 @@
+[
+  {
+    "id": "EMAIL-1",
+    "direction": "in",
+    "from": "lisa.park@example.com",
+    "to": "support@jewelryops.test",
+    "subject": "Re: Order ORD-2038 still not delivered",
+    "body": "Hi, my order ORD-2038 is still late. Can you check what happened?",
+    "created_at": "2025-02-01T13:00:00+00:00"
+  },
+  {
+    "id": "EMAIL-2",
+    "direction": "out",
+    "from": "support@jewelryops.test",
+    "to": "ops-team@jewelryops.test",
+    "subject": "Inventory discrepancy BRAC-301",
+    "body": "We saw a discrepancy for BRAC-301. Please confirm latest physical count.",
+    "created_at": "2025-02-01T13:00:00+00:00"
+  }
+]

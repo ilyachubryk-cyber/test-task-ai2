@@ -1,0 +1,8 @@
+[
+  {"id": "note_1", "entity_type": "order", "entity_id": "ORD-2038", "author": "Support", "body": "Customer called about late delivery. Apologized and offered free shipping on next order.", "created_at": "2025-01-22T14:00:00Z"},
+  {"id": "note_2", "entity_type": "order", "entity_id": "ORD-2038", "author": "Ops", "body": "FedEx delay due to weather. Tracking updated.", "created_at": "2025-01-20T10:00:00Z"},
+  {"id": "note_3", "entity_type": "customer", "entity_id": "cust_005", "author": "Sales", "body": "Lisa is a repeat buyer. Handle with care.", "created_at": "2025-01-15T09:00:00Z"},
+  {"id": "note_4", "entity_type": "order", "entity_id": "ORD-2041", "author": "Warehouse", "body": "RING-101 reserved for this order. Ready to pick.", "created_at": "2025-02-03T11:00:00Z"},
+  {"id": "note_5", "entity_type": "inventory", "entity_id": "BRAC-301", "author": "Ops", "body": "Discrepancy: system showed 2, physical count 0. Adjusted. Reorder placed.", "created_at": "2025-01-28T16:00:00Z"},
+  {"id": "note_6", "entity_type": "order", "entity_id": "ORD-2040", "author": "Jewelry", "body": "Engraving approved. Will complete by Feb 5.", "created_at": "2025-02-02T09:00:00Z"}
+]

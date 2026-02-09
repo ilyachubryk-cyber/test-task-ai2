@@ -1,0 +1,47 @@
+[
+  {
+    "id": "cust_001",
+    "name": "Sarah Chen",
+    "email": "sarah.chen@email.com",
+    "phone": "+1-555-0101",
+    "tier": "gold",
+    "lifetime_value": 12500,
+    "notes": "Prefers email contact. Bought engagement ring 2024."
+  },
+  {
+    "id": "cust_002",
+    "name": "Michael Torres",
+    "email": "m.torres@email.com",
+    "phone": "+1-555-0102",
+    "tier": "silver",
+    "lifetime_value": 3200,
+    "notes": "Returned one item in past; no issues since."
+  },
+  {
+    "id": "cust_003",
+    "name": "Emma Watson",
+    "email": "emma.w@email.com",
+    "phone": "+1-555-0103",
+    "tier": "platinum",
+    "lifetime_value": 28000,
+    "notes": "VIP. Always ship with signature required."
+  },
+  {
+    "id": "cust_004",
+    "name": "James Okonkwo",
+    "email": "j.okonkwo@email.com",
+    "phone": "+1-555-0104",
+    "tier": "bronze",
+    "lifetime_value": 890,
+    "notes": "New customer. First order pending (ORD-2041)."
+  },
+  {
+    "id": "cust_005",
+    "name": "Lisa Park",
+    "email": "lisa.park@email.com",
+    "phone": "+1-555-0105",
+    "tier": "gold",
+    "lifetime_value": 8100,
+    "notes": "Complained about late delivery for order ORD-2038. Comped shipping."
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "ORD-2038",
+    "customer_id": "cust_005",
+    "customer_name": "Lisa Park",
+    "items": [{"sku": "RING-101", "name": "Classic Solitaire", "qty": 1, "unit_price": 1899.00}],
+    "total": 1899.00,
+    "status": "delivered",
+    "placed_at": "2025-01-10T14:00:00Z",
+    "shipped_at": "2025-01-18T09:00:00Z",
+    "delivered_at": "2025-01-22T11:30:00Z",
+    "carrier": "FedEx",
+    "tracking": "789012345678",
+    "notes": "Delivery was 2 days late; customer complained. Refunded shipping."
+  },
+  {
+    "id": "ORD-2039",
+    "customer_id": "cust_001",
+    "customer_name": "Sarah Chen",
+    "items": [
+      {"sku": "NECK-202", "name": "Pearl Pendant", "qty": 1, "unit_price": 345.00},
+      {"sku": "BRAC-301", "name": "Silver Bracelet", "qty": 2, "unit_price": 89.00}
+    ],
+    "total": 523.00,
+    "status": "shipped",
+    "placed_at": "2025-01-28T10:00:00Z",
+    "shipped_at": "2025-01-30T08:00:00Z",
+    "carrier": "UPS",
+    "tracking": "1Z999AA10123456784",
+    "notes": null
+  },
+  {
+    "id": "ORD-2040",
+    "customer_id": "cust_003",
+    "customer_name": "Emma Watson",
+    "items": [{"sku": "RING-102", "name": "Emerald Band", "qty": 1, "unit_price": 4200.00}],
+    "total": 4200.00,
+    "status": "processing",
+    "placed_at": "2025-02-01T16:00:00Z",
+    "notes": "Custom engraving requested."
+  },
+  {
+    "id": "ORD-2041",
+    "customer_id": "cust_004",
+    "customer_name": "James Okonkwo",
+    "items": [{"sku": "RING-101", "name": "Classic Solitaire", "qty": 1, "unit_price": 1899.00}],
+    "total": 1899.00,
+    "status": "pending",
+    "placed_at": "2025-02-03T09:00:00Z",
+    "notes": "Payment confirmed; awaiting stock check."
+  },
+  {
+    "id": "ORD-2042",
+    "customer_id": "cust_002",
+    "customer_name": "Michael Torres",
+    "items": [{"sku": "NECK-202", "name": "Pearl Pendant", "qty": 1, "unit_price": 345.00}],
+    "total": 345.00,
+    "status": "cancelled",
+    "placed_at": "2025-01-25T11:00:00Z",
+    "notes": "Customer requested cancellation before ship."
+  }
+]

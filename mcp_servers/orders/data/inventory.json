@@ -1,0 +1,7 @@
+[
+  {"sku": "RING-101", "name": "Classic Solitaire", "quantity": 3, "reserved": 2, "reorder_at": 1},
+  {"sku": "RING-102", "name": "Emerald Band", "quantity": 1, "reserved": 1, "reorder_at": 2},
+  {"sku": "NECK-202", "name": "Pearl Pendant", "quantity": 12, "reserved": 0, "reorder_at": 5},
+  {"sku": "BRAC-301", "name": "Silver Bracelet", "quantity": 0, "reserved": 0, "reorder_at": 0},
+  {"sku": "EARR-401", "name": "Diamond Studs", "quantity": 8, "reserved": 0, "reorder_at": 4}
+]
