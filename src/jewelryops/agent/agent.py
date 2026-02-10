@@ -26,7 +26,7 @@ MCP_ROOT = PROJECT_ROOT / "mcp_servers"
 
 @dataclass
 class SessionState:
-    """Lightweight per-session state for context management."""
+    """Per-session conversation state."""
 
     session_id: str
     messages: List[Dict[str, str]] = field(default_factory=list)
@@ -38,20 +38,32 @@ SESSIONS: Dict[str, SessionState] = {}
 
 
 class JewelryOpsAgentService:
-    """Main service coordinating the JewelryOps AutoGen agent."""
+    """Orchestrates the JewelryOps AutoGen agent: sessions, MCP tools, and streaming."""
 
     def __init__(self) -> None:
         self._mcp_tools_cache: List[Dict[str, Any]] | None = None
 
-
     def get_session(self, session_id: str) -> SessionState:
+        """Return or create the SessionState for the given session_id.
+        
+        Args:
+            session_id: Unique identifier for the session (str).
+            
+        Returns:
+            SessionState: Session object containing messages, summary, and tool call count.
+        """
         if session_id not in SESSIONS:
             SESSIONS[session_id] = SessionState(session_id=session_id)
         return SESSIONS[session_id]
 
 
     async def _load_mcp_tools_async(self) -> List[Dict[str, Any]]:
-        """Load tools from all MCP servers and convert to OpenAI function format."""
+        """Load tools from all MCP servers and convert to OpenAI function format.
+        
+        Returns:
+            List[Dict[str, Any]]: List of tool schemas in OpenAI function format.
+                Each dict contains {"type": "function", "function": {...}}.
+        """
         settings = get_settings()
         env = {"PYTHONPATH": str(PROJECT_ROOT), **os.environ}
 
@@ -78,16 +90,18 @@ class JewelryOpsAgentService:
         for config in mcp_configs:
             cmd = config["config_cmd"]
             if not cmd:
-                print(
-                    f"Info: MCP server '{config['name']}' has no startup command "
-                    "configured. Assuming it runs separately."
+                logger.info(
+                    "MCP server '%s' has no startup command configured; skipping",
+                    config["name"],
                 )
                 continue
 
             cmd_parts = cmd.split()
             if len(cmd_parts) < 2:
-                print(
-                    f"Warning: Invalid MCP command format for '{config['name']}': {cmd}"
+                logger.warning(
+                    "Invalid MCP command format for '%s': %s",
+                    config["name"],
+                    cmd,
                 )
                 continue
 
@@ -112,32 +126,46 @@ class JewelryOpsAgentService:
                                 },
                             }
                             all_tools.append(tool_schema)
-            except Exception as e:
-                print(
-                    f"Warning: Failed to connect to MCP server '{config['name']}': {e}"
+            except (OSError, ConnectionError, TimeoutError) as e:
+                logger.warning(
+                    "Failed to connect to MCP server '%s': %s",
+                    config["name"],
+                    e,
                 )
                 continue
 
         return all_tools
 
     async def get_mcp_tools_async(self) -> List[Dict[str, Any]]:
-        """Get MCP tools, loading them if needed (cached)."""
+        """Get MCP tools, loading them if needed (cached).
+        
+        Returns:
+            List[Dict[str, Any]]: Cached list of MCP tool schemas in OpenAI format.
+        """
         if self._mcp_tools_cache is None:
             self._mcp_tools_cache = await self._load_mcp_tools_async()
         return self._mcp_tools_cache or []
 
     def get_mcp_tools(self) -> List[Dict[str, Any]]:
-        """Get MCP tools synchronously from cache (or empty list)."""
+        """Get MCP tools synchronously from cache (or empty list).
+        
+        Returns:
+            List[Dict[str, Any]]: Cached MCP tool schemas or empty list if not yet loaded.
+        """
         return self._mcp_tools_cache or []
 
 
     async def execute_tool_async(self, name: str, arguments: Dict[str, Any]) -> str:
-        """Execute a tool by name with given arguments.
-
-        Custom tools are executed directly. MCP tools are executed against
-        configured MCP servers (assumed to be running separately).
+        """Execute a tool by name. Custom tools run in-process; MCP tools via stdio.
+        
+        Args:
+            name: Name of the tool to execute (str).
+            arguments: Dict of tool arguments.
+            
+        Returns:
+            str: JSON-formatted tool result or error message.
         """
-        logger.info(f"Executing tool: {name} with arguments: {arguments}")
+        logger.info("Executing tool: %s", name)
         custom_functions = get_custom_function_map()
         if name in custom_functions:
             logger.debug(f"Executing custom tool: {name}")
@@ -190,14 +218,22 @@ class JewelryOpsAgentService:
                         tools_result = await session.list_tools()
                         tool_names = [t.name for t in tools_result.tools]
                         if name in tool_names:
-                            logger.info(f"Calling MCP tool: {name} from server: {config['name']}")
+                            logger.info(
+                                "Calling MCP tool %s on server %s",
+                                name,
+                                config["name"],
+                            )
                             result = await session.call_tool(name, arguments)
-                            logger.info(f"MCP tool {name} completed successfully")
                             if result.content:
                                 return result.content[0].text or ""
                             return json.dumps(result, indent=2, default=str)
-            except Exception as e:
-                logger.debug(f"Failed to call MCP tool {name} on server {config['name']}: {e}")
+            except (OSError, ConnectionError, TimeoutError) as e:
+                logger.debug(
+                    "MCP server %s did not provide tool %s: %s",
+                    config["name"],
+                    name,
+                    e,
+                )
                 continue
 
         logger.error(f"Tool {name} not found on any MCP server or custom tools")
@@ -205,7 +241,14 @@ class JewelryOpsAgentService:
 
 
     async def build_agent_async(self, session: SessionState) -> autogen.ConversableAgent:
-        """Create the main JewelryOps support agent with tools attached."""
+        """Create the main JewelryOps support agent with tools attached.
+        
+        Args:
+            session: SessionState containing conversation history and context.
+            
+        Returns:
+            autogen.ConversableAgent: Configured agent ready to process user queries.
+        """
         settings = get_settings()
 
         system_message_parts: List[str] = [settings.agent_system_prompt]
@@ -256,7 +299,15 @@ class JewelryOpsAgentService:
     async def run_agent_stream(
         self, session_id: str, user_message: str
     ) -> AsyncIterator[str]:
-        """Run the agent for a given message and yield streaming tokens."""
+        """Run the agent for a given message and yield streaming tokens.
+        
+        Args:
+            session_id: Unique session identifier (str).
+            user_message: User query text (str).
+            
+        Yields:
+            str: Individual tokens from agent response including investigation steps and thoughts.
+        """
         logger.info(f"Starting agent session: {session_id}")
         logger.debug(f"User message: {user_message[:200]}")
         session = self.get_session(session_id)
@@ -354,11 +405,9 @@ class JewelryOpsAgentService:
                                 if tc["arguments"]
                                 else {}
                             )
-                            logger.debug(f"Tool {tc['name']} arguments: {args}")
                             result = await self.execute_tool_async(
                                 tc["name"], args
                             )
-                            logger.info(f"Tool {tc['name']} returned result (length: {len(result)})")
                             messages.append(
                                 {
                                     "role": "tool",
@@ -366,8 +415,21 @@ class JewelryOpsAgentService:
                                     "content": result,
                                 }
                             )
-                        except Exception as e:
-                            logger.error(f"Error executing tool {tc['name']}: {e}")
+                        except json.JSONDecodeError as e:
+                            logger.error(
+                                "Invalid tool arguments for %s: %s",
+                                tc["name"],
+                                e,
+                            )
+                            messages.append(
+                                {
+                                    "role": "tool",
+                                    "tool_call_id": tc["id"],
+                                    "content": f"Error: invalid arguments - {e}",
+                                }
+                            )
+                        except (OSError, ConnectionError, TimeoutError, ValueError) as e:
+                            logger.error("Error executing tool %s: %s", tc["name"], e)
                             messages.append(
                                 {
                                     "role": "tool",
@@ -422,7 +484,8 @@ class JewelryOpsAgentService:
 
                 full_response = final_response
 
-        except Exception as e:
+        except (TimeoutError, ConnectionError, ValueError) as e:
+            logger.exception("Agent execution failed: %s", e)
             yield f"Error during agent execution: {e}"
 
         if full_response:
@@ -463,4 +526,3 @@ __all__ = [
     "get_mcp_tools_async",
     "run_agent_stream",
 ]
-

@@ -1,11 +1,26 @@
+"""Streamlit chat UI for the JewelryOps agent.
+
+Connects to the backend via WebSocket (URL from env JEWELRYOPS_WS_URL or default).
+Streams assistant response token-by-token and filters leading JSON from the agent.
+"""
+
 import json
 import logging
+import os
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Iterator
 
 import streamlit as st
 from websocket import create_connection
+
+
+def _default_ws_url() -> str:
+    """WebSocket URL for the agent backend (env JEWELRYOPS_WS_URL or default)."""
+    return os.environ.get(
+        "JEWELRYOPS_WS_URL",
+        "ws://localhost:8000/ws/chat",
+    )
 
 
 def setup_client_logging() -> logging.Logger:
@@ -41,6 +56,17 @@ def ws_token_stream(ws_url: str, session_id: str, message: str) -> Iterator[str]
 
     This happens entirely on the client so the backend can keep sending
     raw model output.
+    
+    Args:
+        ws_url: WebSocket server URL (str, e.g., "ws://localhost:8000/ws/chat").
+        session_id: Unique session identifier (str).
+        message: User query text (str).
+        
+    Yields:
+        str: Individual tokens from the agent response.
+        
+    Raises:
+        RuntimeError: If the server sends an error message.
     """
     LOGGER.info("Connecting ws_url=%s session_id=%s", ws_url, session_id)
     ws = create_connection(ws_url, timeout=60)
@@ -100,6 +126,12 @@ def _format_json_prefix(obj: dict) -> str:
 
     We look for common keys like tools/tool_calls and thoughts/analysis.
     If we don't recognize the structure, we simply omit the JSON.
+    
+    Args:
+        obj: Parsed JSON object (dict).
+        
+    Returns:
+        str: Human-readable text representation or empty string if not recognized.
     """
     if not isinstance(obj, dict):
         return ""
@@ -147,6 +179,12 @@ def _process_leading_json(prefix_buffer: str) -> tuple[str, str, bool]:
     - replacement_text: human-readable text to emit instead of JSON
     - remaining_text: any non-JSON content that follows immediately
     - still_in_prefix: whether we are still unsure and should keep buffering
+    
+    Args:
+        prefix_buffer: Accumulated token prefix to check for JSON (str).
+        
+    Returns:
+        tuple[str, str, bool]: (replacement_text, remaining_text, still_in_prefix).
     """
     s = prefix_buffer.lstrip()
     if not s:
@@ -162,7 +200,7 @@ def _process_leading_json(prefix_buffer: str) -> tuple[str, str, bool]:
     candidate = s[: last_brace + 1]
     try:
         obj = json.loads(candidate)
-    except Exception:
+    except json.JSONDecodeError:
         return "", "", True
 
     replacement = _format_json_prefix(obj)
@@ -176,8 +214,6 @@ st.title("JewelryOps Agent")
 
 with st.sidebar:
     st.subheader("Connection")
-    default_ws = "ws://localhost:8000/ws/chat"
-    ws_url = st.text_input("WebSocket URL", value=default_ws)
     session_id = st.text_input("Session ID", value=st.session_state.get("session_id", "streamlit-demo"))
     st.session_state["session_id"] = session_id
     st.markdown("---")
@@ -186,6 +222,8 @@ with st.sidebar:
 
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
+
+ws_url = _default_ws_url()
 
 for m in st.session_state["messages"]:
     with st.chat_message(m["role"]):
@@ -200,7 +238,7 @@ if prompt:
     with st.chat_message("assistant"):
         try:
             full = st.write_stream(ws_token_stream(ws_url, session_id, prompt))
-        except Exception as e:
+        except (ConnectionError, TimeoutError, RuntimeError) as e:
             full = f"Error: {e}"
             st.error(full)
 

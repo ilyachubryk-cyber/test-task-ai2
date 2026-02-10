@@ -14,9 +14,11 @@ from .agent import (
     get_session,
     run_agent_stream,
 )
+from ..models import SessionState
 
 __all__ = [
     "JewelryOpsAgentService",
+    "SessionState",
     "get_mcp_tools",
     "get_mcp_tools_async",
     "get_session",

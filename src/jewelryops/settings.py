@@ -1,4 +1,3 @@
-
 from pathlib import Path
 from typing import Literal
 
@@ -6,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """App configuration"""
+    """Application configuration."""
 
     host: str = "0.0.0.0"
     port: int = 8000
@@ -22,6 +21,12 @@ class Settings(BaseSettings):
     tool_model: str = "gpt-4o-mini"
     tool_api_key: str | None = None
     tool_base_url: str | None = "https://api.openai.com/v1"
+    tool_request_timeout_seconds: float = 60.0
+
+    cors_origins: str = "*"
+
+    redis_url: str | None = None
+    context_ttl_seconds: int = 86400  # 24 hours
 
     agent_system_prompt: str = (
         "You are a senior support specialist at JewelryOps, a luxury jewelry "
@@ -82,6 +87,10 @@ class Settings(BaseSettings):
             "TOOL_MODEL": "tool_model",
             "TOOL_API_KEY": "tool_api_key",
             "TOOL_BASE_URL": "tool_base_url",
+            "TOOL_REQUEST_TIMEOUT_SECONDS": "tool_request_timeout_seconds",
+            "CORS_ORIGINS": "cors_origins",
+            "REDIS_URL": "redis_url",
+            "CONTEXT_TTL_SECONDS": "context_ttl_seconds",
             "AGENT_SYSTEM_PROMPT": "agent_system_prompt",
             "EXTRACT_ENTITIES_SYSTEM_PROMPT": "extract_entities_system_prompt",
             "SUMMARIZE_STATE_SYSTEM_PROMPT": "summarize_state_system_prompt",
@@ -96,7 +105,7 @@ class Settings(BaseSettings):
 
 
 def get_settings() -> Settings:
-    """Singleton-style accessor for settings."""
+    """Return the application settings singleton (loaded from env / .env)."""
     global _SETTINGS
     try:
         return _SETTINGS

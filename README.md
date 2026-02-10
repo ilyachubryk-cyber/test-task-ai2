@@ -10,7 +10,7 @@ The agent behaves like a real agent – it runs in a loop (observe → decide �
 - 3 local MCP servers – Customers (CRM), Orders & Inventory, Communications (internal notes)
 - 3 custom tools – `extract_entities`, `summarize_state`, `check_requires_confirmation`
 - Streamlit – chat UI consuming WebSocket token stream
-- SQLite – simple persistence
+- SQLite – simple persistence; Redis (optional) – chat context with TTL
 - Config – `pydantic-settings` with `.env`
 
 # How to run
@@ -23,6 +23,8 @@ cd test_task2
 uv sync         # or: pip install -e .
 cp env.example .env
 # Set OPENAI_API_KEY in .env or export it
+# Optional: start Redis for persisting chat context (REDIS_URL, CONTEXT_TTL_SECONDS in .env)
+docker compose up -d redis
 uv run uvicorn jewelryops.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -75,6 +77,6 @@ On first run, the server creates tables and inserts mock data (customers like Li
 
 # Context and tool selection
 
-- Context management: Per `session_id` conversation state is kept in memory (`messages`, `investigation_summary`, `tool_calls_count`) via a lightweight `SessionState`. The AutoGen agent's system message includes recent conversation history and investigation summaries so it can maintain context across turns.
+- Context management: Per `session_id` conversation state is loaded from and saved to Redis at the end of each turn; keys expire after `CONTEXT_TTL_SECONDS` (default 24h). Without Redis, state is lost on server restart.
 - Tool selection: The AutoGen agent uses OpenAI function calling to decide which MCP tools or custom tools to call based on the conversation; there is no hard-coded workflow for specific scenarios.
 - Side effects: Before calling tools with side effects (like `add_note`), the agent is instructed to call `check_requires_confirmation` and ask the user for approval when needed.
